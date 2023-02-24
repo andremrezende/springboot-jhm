@@ -1,26 +1,22 @@
 package br.com.rezende.jhm.spring.services;
 
-import br.com.rezende.jhm.spring.objects.User;
+import br.com.rezende.jhm.spring.model.User;
+import br.com.rezende.jhm.spring.repositories.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
 @AllArgsConstructor
+@FieldDefaults(makeFinal = true)
 public class UserService {
 
-//    AerospikeUserRepository aerospikeUserRepository;
+    private UserRepository userRepository;
 
-    public Optional<User> readUserById(int id) {
-        return Optional.empty();//aerospikeUserRepository.findById(id);
-    }
-
-    public void addUser(User user) {
-
-    }
-
-    public void removeUserById(int id) {
-
+    public List<User> readUserByName(String name) {
+        return userRepository.findByName(name);
     }
 }

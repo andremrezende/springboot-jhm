@@ -1,8 +1,10 @@
 package br.com.rezende.jhm.spring.benchmark;
 
-import br.com.rezende.jhm.spring.SimpleSpringbootAerospikeDemoApplication;
-import br.com.rezende.jhm.spring.objects.User;
-import br.com.rezende.jhm.spring.services.UserService;
+import br.com.rezende.jhm.spring.SimpleSpringbootApplication;
+import br.com.rezende.jhm.spring.model.User;
+import br.com.rezende.jhm.spring.repositories.UserRepository;
+//import org.junit.Test;
+//import org.junit.runner.RunWith;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openjdk.jmh.annotations.*;
@@ -15,6 +17,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /* Environment variables example
@@ -33,9 +38,25 @@ public class JMHSpringDataDemo {
     volatile ConfigurableApplicationContext context;
 
     // Can add any existing Spring Service from the application
-    private UserService userService;
+//    private UserService userService;
+//    private MySQLContainer mySQLContainer;
+
+    private UserRepository userRepository;
 
     final static int numberOfUsers = Integer.parseInt(System.getenv("numUsers"));
+
+    @Setup
+    public void setup() {
+        this.context = new SpringApplication(SimpleSpringbootApplication.class).run();
+        userRepository = this.context.getBean(UserRepository.class);
+
+    }
+
+    @TearDown
+    public void tearDown() {
+        this.context.close();
+    }
+
 
     @Test
     public void contextLoads() throws RunnerException {
@@ -49,16 +70,17 @@ public class JMHSpringDataDemo {
                 .forks(Integer.parseInt(System.getenv("forkNum")))
                 .threads(Integer.parseInt(System.getenv("numThreads")))
                 .shouldDoGC(true)
+                .timeUnit(TimeUnit.MILLISECONDS)
                 // Much more information
                 .verbosity(VerboseMode.EXTRA)
 
-                 // Profilers
+                // Profilers
                 .addProfiler(StackProfiler.class)
                 .addProfiler(GCProfiler.class)
-                 //  .addProfiler(LinuxPerfNormProfiler.class)
-                 //      .addProfiler(LinuxPerfAsmProfiler.class)
-                 //      .addProfiler(WinPerfAsmProfiler.class)
-                 //      .addProfiler(DTraceAsmProfiler.class)
+                //  .addProfiler(LinuxPerfNormProfiler.class)
+                //      .addProfiler(LinuxPerfAsmProfiler.class)
+                //      .addProfiler(WinPerfAsmProfiler.class)
+                //      .addProfiler(DTraceAsmProfiler.class)
 
                 // JVM tuning
                 .jvmArgs("-Xmx10g")
@@ -73,44 +95,26 @@ public class JMHSpringDataDemo {
         new Runner(jmhRunnerOptions).run();
     }
 
-    @Setup
-    public void setup() {
-        this.context = new SpringApplication(SimpleSpringbootAerospikeDemoApplication.class).run();
-        userService = this.context.getBean(UserService.class);
-    }
-
-
-    @Benchmark
-    public String addUsers() {
-        User user ;
-        for (int i = 0; i < numberOfUsers; i++) {
-            user = new User(i , "<User Name> ", "<User Email>", i+10);
-            userService.addUser(user);
-            //System.out.println("User-> " + user);
-        }
-        return "Success";
-    }
+//    @Benchmark
+//    public String readUserByName() {
+//        userService.readUserByName(String.valueOf(2));
+//        for (int i = 0; i < numberOfUsers; i++) {
+//            userService.readUserByName(String.valueOf(i));
+//        }
+//        return "Success";
+//    }
 
     @Benchmark
-    public String readUserById() {
-        userService.readUserById(2);
-        for (int i = 0; i < numberOfUsers; i++) {
-            userService.readUserById(i);
+    public String findByName() throws InterruptedException {
+//        Optional<User> users = userRepository.findByName("1");
+//        if(users.isPresent()) {
+//            return users.get().toString();
+//        }
+        List<User> users = userRepository.findByName("Andre");
+        if(!CollectionUtils.isEmpty(users)) {
+            return users.get(0).toString();
         }
-        return "Success";
+        return "Fail";
     }
 
-    @Benchmark
-    public String removeUsers() {
-        User user = null;
-        for (int i=0 ; i<numberOfUsers;i++){
-            userService.removeUserById(i);
-        }
-        return "Success";
-    }
-
-    @TearDown
-    public void tearDown() {
-        this.context.close();
-    }
 }
